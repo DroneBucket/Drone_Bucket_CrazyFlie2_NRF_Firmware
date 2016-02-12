@@ -74,6 +74,7 @@ static void handleBootloaderCmd(struct esbPacket_s *packet);
 
 int main()
 {
+  srand(time(NULL));
   systickInit();
   memoryInit();
 
@@ -207,7 +208,8 @@ void mainloop()
               packet->size = slRxPacket.length;
 
               // Makes the process sleep for 0 to 1/10th of a second to avoid congestion
-              usleep(100000ULL * rand() / RAND_MAX);
+
+              usleep(rand() % 100000);
               esbSendTxPacket(packet);
             }
             bzero(slRxPacket.data, SYSLINK_MTU);
