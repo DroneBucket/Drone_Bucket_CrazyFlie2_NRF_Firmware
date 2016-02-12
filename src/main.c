@@ -206,6 +206,8 @@ void mainloop()
               memcpy(packet->data, slRxPacket.data, slRxPacket.length);
               packet->size = slRxPacket.length;
 
+              // Makes the process sleep for 0 to 1/10th of a second to avoid congestion
+              usleep(100000ULL * rand() / RAND_MAX);
               esbSendTxPacket(packet);
             }
             bzero(slRxPacket.data, SYSLINK_MTU);
@@ -408,6 +410,9 @@ static void handleBootloaderCmd(struct esbPacket_s *packet)
       if (esbCanTxPacket()) {
         struct esbPacket_s *pk = esbGetTxPacket();
         memcpy(pk, &txpk, sizeof(struct esbPacket_s));
+
+        // Makes the process sleep for 0 to 1/10th of a second to avoid congestion
+        usleep(100000ULL * rand() / RAND_MAX);
         esbSendTxPacket(pk);
       }
 
