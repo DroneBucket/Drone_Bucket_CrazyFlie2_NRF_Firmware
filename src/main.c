@@ -209,7 +209,7 @@ void mainloop()
 
               // Makes the process sleep for 0 to 1/10th of a second to avoid congestion
 
-              usleep(rand() % 100000);
+              msDelay(rand() % 50);
               esbSendTxPacket(packet);
             }
             bzero(slRxPacket.data, SYSLINK_MTU);
@@ -414,7 +414,7 @@ static void handleBootloaderCmd(struct esbPacket_s *packet)
         memcpy(pk, &txpk, sizeof(struct esbPacket_s));
 
         // Makes the process sleep for 0 to 1/10th of a second to avoid congestion
-        usleep(100000ULL * rand() / RAND_MAX);
+        msDelay(rand() % 50);
         esbSendTxPacket(pk);
       }
 
