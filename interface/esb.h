@@ -100,4 +100,10 @@ void esbSetContwave(bool enable);
 /* Set the address of the radio */
 void esbSetAddress(uint64_t address);
 
+/* Set the address of the radio */
+void esbSetAddressWithoutReset(uint64_t address);
+
+void dongleAddress();
+void crazyflieAddress();
+
 #endif //__ESB_H__
