@@ -6,6 +6,10 @@ CLOAD_SCRIPT ?= ../crazyflie-clients-python/bin/cfloader
 S110 ?= 1     # SoftDevice flashed or not
 BLE  ?= 1     # BLE mode activated or not. If disabled, CRTP mode is active
 
+ROLE=0                # Crazyflie is a slave
+DADDRESS=0xC2C2C2C2C2   # Address of the pipe between dongle and CF
+CADDRESS=0XE7E7E7E7E7   # CF address between all CFs
+
 CROSS_COMPILE?=arm-none-eabi-
 
 CC=$(CROSS_COMPILE)gcc
@@ -33,6 +37,18 @@ PERSONAL_DEFINES ?=
 PROCESSOR = -mcpu=cortex-m0 -mthumb
 NRF= -DNRF51
 PROGRAM=cf2_nrf
+
+
+ifeq ($(strip ${ROLE}), 1)
+ROLE=1
+CFLAGS+= -DDADDRESS=${DADDRESS}
+CFLAGS+= -DCADDRESS=${CADDRESS}
+else
+CFLAGS+= -DCADDRESS=${CADDRESS}
+endif
+
+CFLAGS+= -DROLE=$(ROLE)
+
 
 CFLAGS+=$(PROCESSOR) $(NRF) $(PERSONAL_DEFINES) $(INCLUDES) $(CONFIG) $(BUILD_OPTION)
 ASFLAGS=$(PROCESSOR)
@@ -74,10 +90,17 @@ CFLAGS += -I$(NRF51_SDK)/Include/app_common/
 CFLAGS += -I$(NRF51_SDK)/Include/sd_common/
 endif
 
-OBJS += src/main.o gcc_startup_nrf51.o system_nrf51.o src/uart.o \
+ifeq ($(strip $(ROLE)),1)
+	OBJS += src/master/main.o src/master/esb.o 
+else
+	OBJS += src/slave/main.o src/slave/esb.o 
+endif
+
+OBJS += gcc_startup_nrf51.o system_nrf51.o src/uart.o \
         src/syslink.o src/pm.o src/systick.o src/button.o src/swd.o src/ow.o \
         src/ow/owlnk.o src/ow/ownet.o src/ow/owtran.o \
-        src/ow/crcutil.o src/ds2431.o src/ds28e05.o src/esb.o src/memory.o
+        src/ow/crcutil.o src/ds2431.o src/ds28e05.o src/memory.o
+
 
 all: $(PROGRAM).elf $(PROGRAM).bin $(PROGRAM).hex
 	$(SIZE) $(PROGRAM).elf
@@ -91,6 +114,14 @@ ifeq ($(strip $(BLE)),1)
 else
 	@echo "BLE  Disabled"
 endif
+ifeq ($(strip $(ROLE)),1)
+	@echo "Crazyflie master !"
+	@echo "Address dongle pipe" $(DADDRESS)
+	@echo "Address Crazyflies pipe" $(CADDRESS)
+else
+	@echo "Crazyflie slave !"
+	@echo "Address Crazyflies pipe" $(CADDRESS)
+endif
 
 $(PROGRAM).hex: $(PROGRAM).elf
 	$(OBJCOPY) $^ -O ihex $@
@@ -102,7 +133,7 @@ $(PROGRAM).elf: $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f $(PROGRAM).bin $(PROGRAM).elf $(OBJS)
+	rm -f $(PROGRAM).bin $(PROGRAM).elf $(OBJS) src/master/main.o src/master/esb.o src/slave/main.o src/slave/esb.o 
 
 
 ## Flash and debug targets
