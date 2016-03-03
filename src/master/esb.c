@@ -47,18 +47,16 @@ static int txpower = RADIO_TXPOWER_TXPOWER_0dBm;
 static bool contwave = false;
 
 #ifdef DADDRESS
-static uint64_t dongle_address = DADDRESS;
+static uint64_t address = DADDRESS;
 #else
-static uint64_t dongle_address = 0xE7E7E7E7E7ULL;
+static uint64_t address = 0xE3E3E3E3E3ULL;
 #endif
 
 #ifdef CADDRESS
 static uint64_t crazyflie_address = CADDRESS;
 #else
-static uint64_t crazyflie_address = 0xC2C2C2C2C2ULL;
+static uint64_t crazyflie_address = 0xE7E7E7E7E7ULL;
 #endif
-
-
 
 static enum {
 	doTx, doRx, doDiff
@@ -77,7 +75,6 @@ static int curr_down = 1;
 static int curr_up = 1;
 
 static bool has_safelink;
-static bool ack_received;
 
 static EsbPacket ackPacket;     // Empty ack packet
 static EsbPacket servicePacket; // Packet sent to answer a low level request
@@ -167,14 +164,7 @@ static void setupTx(bool retry) {
 	//After being disabled the radio will automatically send the ACK
 	NRF_RADIO->SHORTS &= ~RADIO_SHORTS_DISABLED_RXEN_Msk;
 	NRF_RADIO->SHORTS |= RADIO_SHORTS_DISABLED_TXEN_Msk;
-	if(!ack_received){
-		rs = doTx;
-		dongleAddress();
-	}
-	else{
-		crazyflieAddress();
-	}
-	ack_received = !ack_received;
+	rs = doTx;
 	NRF_RADIO->TASKS_DISABLE = 1UL;
 }
 
@@ -326,9 +316,9 @@ void esbInit() {
 	// Radio address config
 	// Using logical address 0 so only BASE0 and PREFIX0 & 0xFF are used
 	NRF_RADIO->PREFIX0 = 0xC4C3C200UL
-			| (bytewise_bitswap(dongle_address >> 32) & 0xFF); // Prefix byte of addresses 3 to 0
+			| (bytewise_bitswap(address >> 32) & 0xFF); // Prefix byte of addresses 3 to 0
 	NRF_RADIO->PREFIX1 = 0xC5C6C7C8UL;  // Prefix byte of addresses 7 to 4
-	NRF_RADIO->BASE0 = bytewise_bitswap((uint32_t) dongle_address); // Base address for prefix 0
+	NRF_RADIO->BASE0 = bytewise_bitswap((uint32_t) address); // Base address for prefix 0
 	NRF_RADIO->BASE1 = 0x00C2C2C2UL;  // Base address for prefix 1-7
 	NRF_RADIO->TXADDRESS = 0x00UL; // Set device address 0 to use when transmitting
 	NRF_RADIO->RXADDRESSES = 0x01UL; // Enable device address 0 to use which receiving
@@ -466,13 +456,13 @@ void esbSetTxPower(int power) {
 }
 
 void esbSetAddress(uint64_t addr) {
-	dongle_address = addr;
+	address = addr;
 
 	esbReset();
 }
 
 void esbSetAddressWithoutReset(uint64_t addr) {
-	dongle_address = addr;
+	address = addr;
 }
 
 void crazyflieAddress() {
@@ -487,7 +477,7 @@ NRF_RADIO->BASE0 = bytewise_bitswap((uint32_t) crazyflie_address); // Base addre
 void dongleAddress() {
 // Radio address config
 // Using logical address 0 so only BASE0 and PREFIX0 & 0xFF are used
-NRF_RADIO->PREFIX0 = 0xC4C3C200UL | (bytewise_bitswap(dongle_address >> 32) & 0xFF); // Prefix byte of addresses 3 to 0
+NRF_RADIO->PREFIX0 = 0xC4C3C200UL | (bytewise_bitswap(address >> 32) & 0xFF); // Prefix byte of addresses 3 to 0
 NRF_RADIO->PREFIX1 = 0xC5C6C7C8UL;  // Prefix byte of addresses 7 to 4
-NRF_RADIO->BASE0 = bytewise_bitswap((uint32_t) dongle_address); // Base address for prefix 0
+NRF_RADIO->BASE0 = bytewise_bitswap((uint32_t) address); // Base address for prefix 0
 }
